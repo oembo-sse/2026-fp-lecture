@@ -1,5 +1,32 @@
 /-! # Mini compiler project -/
 
+/-! ## F# solution
+```fsharp
+type Exp = V of string
+         | C of int
+         | Add of Exp*Exp
+         | Sub of Exp*Exp
+         | Minus of Exp
+         | Abs of Exp
+
+type Environment = Map<string,int>
+
+// sem : Environment -> Exp -> int
+let rec sem env e =
+  match e with
+  | V x -> Map.find x env // will cause an error if variable not found
+  | C i -> i
+  | Add(n,m) -> sem env n + sem env m
+  | Sub(n,m) -> sem env n - sem env m
+  | Minus n -> - sem env n
+  | Abs n -> abs (sem env n)
+
+let env = Map.ofList [("x",3);("y",-3)]
+let example = Add(Abs(Minus(C 7)), Sub(V "x", Minus(Add(C 2, V "y"))))
+let test = sem env example
+```
+-/
+
 inductive Exp where
   | V : String → Exp
   | C : Int → Exp

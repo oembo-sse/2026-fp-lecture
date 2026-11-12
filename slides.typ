@@ -34,30 +34,45 @@
   info: [#link("https://github.com/oembo-see/2026-fp-lecture")],
 )
 
-#let lean-code(code) = {
+#let lean-code(code, lang: "lean", src: "") = {
   let kw(x) = text(rgb(215, 57, 72), x)
   show "deriving": it => kw(it)
   show "fun_induction": it => kw(it)
   show "where": it => kw(it)
   show "abbrev": it => kw(it)
   show "#guard_msgs": it => kw(it)
-  set text(0.9em)
-  raw(code, lang: "lean")
+  show "termination_by": it => kw(it)
+  show "decreasing_by": it => kw(it)
+  show "return": it => kw(it)
+  show "induction": it => kw(it)
+  show "generalizing": it => kw(it)
+  set text(0.8em)
+  let name = (lean: "Lean", "f#": "F#").at(lang)
+  align(start, block[
+    #place(top + left, dx: .0em, dy: -1.4em, box(inset: .2em, fill: black.transparentize(80%), radius: 15%)[#text(
+      0.8em,
+      white,
+      raw(name),
+    )])
+    #align(start, raw(code, lang: lang))
+  ])
 }
 
-#let code-slide(file, title: auto, nth: auto, map: it => it) = {
+#let code-slide(file, title: auto, nth: auto, map: it => it, lang: "lean") = {
   let file = parseFile(file)
-  let contents = map(if nth == auto { file.content } else {
+  let contents = if nth == auto { file.content } else {
     let xs = file.content.split("\n\n")
     let nths = if type(nth) == int { (nth,) } else { nth }
-    nths.map(n => xs.at(n)).join("\n\n")
-  })
+    nths.map(n => map(xs.at(n))).join("\n\n")
+  }
   let full-title = if title == auto or type(title) != content { file.title } else { title }
   if title != auto { title-slide[#full-title] }
   slide(title: full-title)[
-    #lean-code(contents)
+    #lean-code(contents, lang: lang, src: file)
   ]
 }
+
+#let playground(n) = read("steps.txt").split("\n").at(n)
 
 #table-of-contents()
 
@@ -70,13 +85,63 @@
 
 ]
 
-#code-slide("Fp/Parts/mini-compiler-project.lean", nth: 0, title: true)
-#code-slide("Fp/Parts/mini-compiler-project.lean", nth: (1, 2))
-#code-slide("Fp/Parts/mini-compiler-project.lean", nth: 3)
+#let follow(n) = focus-slide[
+  #raw("Step" + str(n) + ".lean")
+
+  #link(playground(n), text(white)[Open Playground])
+]
+
+#let fixFS(x) = x.split("```fsharp\n").last().split("```").first().trim()
+
+#follow(0)
+
+#code-slide("Fp/Parts/mini-compiler-project.lean", nth: 0, title: true, map: fixFS, lang: "f#")
+
+
+#code-slide("Fp/Parts/mini-compiler-project.lean", nth: 4)
+#code-slide("Fp/Parts/mini-compiler-project.lean", nth: (1, 2), map: fixFS, lang: "f#")
+#code-slide("Fp/Parts/mini-compiler-project.lean", nth: (5, 6))
+#code-slide("Fp/Parts/mini-compiler-project.lean", nth: 7)
+
+#follow(1)
+
 #code-slide("Fp/Parts/optimization.lean", nth: 0, title: true)
-#code-slide("Fp/Parts/optimization.lean", nth: 1, title: [Soundness of optimization], map: x => (
-  x.split(" := ").at(0) + " := ..."
-))
+#code-slide("Fp/Parts/optimization.lean", nth: 1, title: [Soundness of optimization])
+
+#follow(2)
+
+#code-slide("Fp/Parts/visualization.lean", title: true, nth: 0, map: x => x.split("open Graph in").at(1).trim())
+
+#follow(3)
+
+#code-slide("Fp/Parts/virtual-machine.lean", title: true, nth: 0, map: fixFS, lang: "f#")
+#code-slide("Fp/Parts/virtual-machine.lean", nth: 2)
+#code-slide("Fp/Parts/virtual-machine.lean", nth: 1, map: fixFS, lang: "f#")
+#code-slide("Fp/Parts/virtual-machine.lean", nth: 3)
+
+#follow(4)
+
+#code-slide("Fp/Parts/compilation.lean", title: true, nth: 0)
+#code-slide("Fp/Parts/soundness-of-compilation.lean", title: true, nth: 1, map: x => x.split("by").at(0) + "...")
+#code-slide("Fp/Parts/soundness-of-compilation.lean", nth: (1, 0), map: x => x.split("by").at(0) + "...")
+#code-slide("Fp/Parts/soundness-of-compilation.lean", nth: (1, 0))
+
+#follow(5)
+
+#let hideTerm(x) = x.split("dec").at(0).replace("termination_by e.size", "termination_by ?").trim()
+#code-slide("Fp/Parts/repeated-optimization.lean", title: true, nth: 2, map: x => x.split("term").at(0))
+#code-slide("Fp/Parts/repeated-optimization.lean", nth: 2, map: hideTerm)
+#code-slide("Fp/Parts/repeated-optimization.lean", nth: (2, 0), map: hideTerm)
+#code-slide("Fp/Parts/repeated-optimization.lean", nth: (2, 0, 1), map: hideTerm)
+#code-slide("Fp/Parts/repeated-optimization.lean", nth: (2, 0, 1), map: x => x.split("dec").at(0).trim())
+#code-slide("Fp/Parts/repeated-optimization.lean", nth: (2, 0, 1))
+#code-slide("Fp/Parts/repeated-optimization.lean", nth: 3, title: [Soundness of repeated optimization])
+
+#follow(6)
+
+#code-slide("Fp/Parts/fast-and-correct-semantics.lean", nth: 0, title: true)
+#code-slide("Fp/Parts/fast-and-correct-semantics.lean", nth: (0, 1))
+#code-slide("Fp/Parts/fast-and-correct-semantics.lean", nth: (0, 1, 2))
 
 // // Custom outline
 // #table-of-contents()

@@ -1,6 +1,6 @@
 use clap::Parser;
 use color_eyre::{Result, eyre::eyre};
-use heck::{ToKebabCase, ToSnakeCase};
+use heck::ToKebabCase;
 use indexmap::IndexMap;
 use itertools::Itertools;
 use std::{
@@ -22,6 +22,13 @@ enum Cli {
         files: Vec<PathBuf>,
         #[clap(long)]
         base: String,
+        #[clap(long)]
+        raw: String,
+    },
+    StepIndex {
+        files: Vec<PathBuf>,
+        #[clap(long)]
+        raw: String,
     },
 }
 
@@ -90,11 +97,27 @@ fn main() -> Result<()> {
                 files.iter().map(|x| x.display()).join("\n"),
             )?;
         }
-        Cli::Readme { files, base } => {
-            for f in files {
-                let url = mk_playground_link(&format!("{base}/{}", f.display()));
-                println!("{url}");
-            }
+        Cli::Readme { files, base, raw } => {
+            let links = files
+                .into_iter()
+                .enumerate()
+                .map(|(i, f)| {
+                    let gh = format!("{base}/{}", f.display());
+                    let play = mk_playground_link(&format!("{raw}/{}", f.display()));
+                    format!("| **Step {i}** | [Link]({gh}) | [Link]({play}) |")
+                })
+                .join("\n");
+
+            let out = README.replace("LINKS", &links);
+            println!("{}", out.trim())
+        }
+        Cli::StepIndex { files, raw } => {
+            let links = files
+                .into_iter()
+                .map(|f| mk_playground_link(&format!("{raw}/{}", f.display())))
+                .join("\n");
+
+            println!("{}", links.trim())
         }
     }
 
@@ -106,3 +129,16 @@ fn mk_playground_link(url: &str) -> String {
     let encoded = urlencoding::encode(url);
     format!("{playground}/#url={encoded}")
 }
+
+const README: &str = r#"
+# 2026 Functional Programming guest lecture
+
+_By Oliver Bøving_
+
+## Links
+
+| Step | GitHub | Lean Playground |
+|------|--------|-----------------|
+LINKS
+
+"#;

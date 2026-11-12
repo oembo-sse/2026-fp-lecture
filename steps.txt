@@ -1,0 +1,8 @@
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep0.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep1.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep2.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep3.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep4.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep5.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep6.lean
+https://live.lean-lang.org/#url=https%3A%2F%2Fraw.githubusercontent.com%2Foembo-sse%2F2026-fp-lecture%2Frefs%2Fheads%2Fmain%2FFp%2FStep7.lean

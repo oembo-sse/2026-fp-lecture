@@ -95,7 +95,35 @@ end
 
 
 
+
 /-! # Mini compiler project -/
+
+/-! ## F# solution
+```fsharp
+type Exp = V of string
+         | C of int
+         | Add of Exp*Exp
+         | Sub of Exp*Exp
+         | Minus of Exp
+         | Abs of Exp
+
+type Environment = Map<string,int>
+
+// sem : Environment -> Exp -> int
+let rec sem env e =
+  match e with
+  | V x -> Map.find x env // will cause an error if variable not found
+  | C i -> i
+  | Add(n,m) -> sem env n + sem env m
+  | Sub(n,m) -> sem env n - sem env m
+  | Minus n -> - sem env n
+  | Abs n -> abs (sem env n)
+
+let env = Map.ofList [("x",3);("y",-3)]
+let example = Add(Abs(Minus(C 7)), Sub(V "x", Minus(Add(C 2, V "y"))))
+let test = sem env example
+```
+-/
 
 inductive Exp where
   | V : String → Exp
@@ -126,32 +154,26 @@ def ex.env : Environment
 /-- info: 9 -/
 #guard_msgs in #eval ex.sem ex.env
 
-/-! # Visualization -/
+/-! # Optimization -/
 
-open Graph in
-def Exp.graph (e : Exp) : GraphBuilder NodeId :=
-  match e with
-  | .C c => node {label := toString c}
-  | .V v => node {label := v}
-  | .Add l r => do
-    let id ← node {label := "_ + _"}
-    edge id (← l.graph) ""
-    edge id (← r.graph) ""
-    return id
-  | .Sub l r => do
-    let id ← node {label := "_ - _"}
-    edge id (← l.graph) ""
-    edge id (← r.graph) ""
-    return id
-  | .Minus x => do
-    let id ← node {label := "- _"}
-    edge id (← x.graph) ""
-    return id
-  | .Abs x => do
-    let id ← node {label := "abs _"}
-    edge id (← x.graph) ""
-    return id
-def Exp.ast (e : Exp) : Graph.GraphBuilder Unit := do let _ ← e.graph
+def Exp.opt : Exp → Exp
+  | .Add (.C i) (.C j) => .C (i + j)
+  | .Add x (.C 0) => x
+  | .Add (.C 0) x => x
+  | .Sub x (.C 0) => x
+  | .Sub (.C 0) x => .Minus x
+  | .Sub (.C i) (.C j) => .C (i - j)
+  | .Minus (.C i) => .C (- i)
+  | .Minus (.Minus x) => x
+  | .Minus x => .Minus x.opt
+  | .Abs (.C i) => .C i.natAbs
+  --
+  | .Add a b => .Add a.opt b.opt
+  | .Sub a b => .Sub a.opt b.opt
+  | .Abs x => .Abs x.opt
+  | .V s => .V s
+  | .C c => .C c
 
-#graphviz ex.ast
+theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
+  fun_induction opt e with grind [sem]
 

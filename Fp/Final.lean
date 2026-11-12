@@ -95,8 +95,10 @@ end
 
 
 
-/-! # F# solution
 
+/-! # Mini compiler project -/
+
+/-! ## F# solution
 ```fsharp
 type Exp = V of string
          | C of int
@@ -120,24 +122,8 @@ let rec sem env e =
 let env = Map.ofList [("x",3);("y",-3)]
 let example = Add(Abs(Minus(C 7)), Sub(V "x", Minus(Add(C 2, V "y"))))
 let test = sem env example
-
-// Virtual Machine
-type Instruction = | ADD | SUB | SIGN | ABS | PUSH of int
-type Stack = int list
-
-// intpInstr: Instruction -> Stack -> Stack
-let intpInstr i st =
-  match (i,st) with
-  | (ADD,(n::m::rest)) -> m+n ::rest
-  | (SUB,(n::m::rest)) -> m-n ::rest
-  | (SIGN,(n::rest))   -> -n :: rest
-  | (ABS,(n::rest))    -> (abs n)::rest
-  | (PUSH n,_)         -> n::st
 ```
-
 -/
-
-/-! # Mini compiler project -/
 
 inductive Exp where
   | V : String → Exp
@@ -171,35 +157,70 @@ def ex.env : Environment
 /-! # Visualization -/
 
 open Graph in
-def Exp.graph (e : Exp) : GraphBuilder NodeId :=
-  match e with
+def Exp.graph : Exp → GraphBuilder NodeId
   | .C c => node {label := toString c}
   | .V v => node {label := v}
   | .Add l r => do
     let id ← node {label := "_ + _"}
-    edge id (← l.graph) ""
-    edge id (← r.graph) ""
+    edge id (← l.graph) ""; edge id (← r.graph) ""
     return id
   | .Sub l r => do
     let id ← node {label := "_ - _"}
-    edge id (← l.graph) ""
-    edge id (← r.graph) ""
+    edge id (← l.graph) ""; edge id (← r.graph) ""
     return id
   | .Minus x => do
-    let id ← node {label := "- _"}
-    edge id (← x.graph) ""
-    return id
+    let id ← node {label := "- _"}; edge id (← x.graph) ""; return id
   | .Abs x => do
-    let id ← node {label := "abs _"}
-    edge id (← x.graph) ""
-    return id
+    let id ← node {label := "abs _"}; edge id (← x.graph) ""; return id
+
 def Exp.ast (e : Exp) : Graph.GraphBuilder Unit := do let _ ← e.graph
 
 #graphviz ex.ast
 
+/-! # Optimization -/
+
+def Exp.opt : Exp → Exp
+  | .Add (.C i) (.C j) => .C (i + j)
+  | .Add x (.C 0) => x
+  | .Add (.C 0) x => x
+  | .Sub x (.C 0) => x
+  | .Sub (.C 0) x => .Minus x
+  | .Sub (.C i) (.C j) => .C (i - j)
+  | .Minus (.C i) => .C (- i)
+  | .Minus (.Minus x) => x
+  | .Minus x => .Minus x.opt
+  | .Abs (.C i) => .C i.natAbs
+  --
+  | .Add a b => .Add a.opt b.opt
+  | .Sub a b => .Sub a.opt b.opt
+  | .Abs x => .Abs x.opt
+  | .V s => .V s
+  | .C c => .C c
+
+theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
+  fun_induction opt e with grind [sem]
+
 /-! # Virtual Machine -/
 
-inductive Instruction where | ADD | SUB | SIGN | ABS | PUSH (value : Int) | READ (s : String)
+/-! ## F# solution
+```fsharp
+// Virtual Machine
+type Instruction = | ADD | SUB | SIGN | ABS | PUSH of int
+type Stack = int list
+
+// intpInstr: Instruction -> Stack -> Stack
+let intpInstr i st =
+  match (i,st) with
+  | (ADD,(n::m::rest)) -> m+n ::rest
+  | (SUB,(n::m::rest)) -> m-n ::rest
+  | (SIGN,(n::rest))   -> -n :: rest
+  | (ABS,(n::rest))    -> (abs n)::rest
+  | (PUSH n,_)         -> n::st
+```
+-/
+
+inductive Instruction where
+  | ADD | SUB | SIGN | ABS | PUSH (value : Int) | READ (s : String)
 deriving Repr
 abbrev Stack := List Int
 
@@ -236,32 +257,8 @@ theorem exec_sound_aux (x : Exp) (env : Environment) (rest : List Instruction) :
     exec (x.compile ++ rest) env = [x.sem env] ++ exec rest env := by
   induction x generalizing rest env with grind [exec, compile, intpInstr, sem]
 
-theorem exec_sound (x : Exp) (env : Environment) :
-    exec x.compile env = [x.sem env] := by
+theorem exec_sound (x : Exp) (env : Environment) : exec x.compile env = [x.sem env] := by
   grind [exec_sound_aux x env [], exec]
-
-/-! # Optimization -/
-
-def Exp.opt : Exp → Exp
-  | .Add (.C i) (.C j) => .C (i + j)
-  | .Add x (.C 0) => x
-  | .Add (.C 0) x => x
-  | .Sub x (.C 0) => x
-  | .Sub (.C 0) x => .Minus x
-  | .Sub (.C i) (.C j) => .C (i - j)
-  | .Minus (.C i) => .C (- i)
-  | .Minus (.Minus x) => x
-  | .Minus x => .Minus x.opt
-  | .Abs (.C i) => .C i.natAbs
-  --
-  | .Add a b => .Add a.opt b.opt
-  | .Sub a b => .Sub a.opt b.opt
-  | .Abs x => .Abs x.opt
-  | .V s => .V s
-  | .C c => .C c
-
-theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
-  fun_induction opt e with grind [compile, sem]
 
 /-! # Repeated optimization -/
 
@@ -288,12 +285,13 @@ theorem optAll_sound (e : Exp) (env : Environment) : e.optAll.sem env = e.sem en
 #eval compile ex
 #eval compile ex.optAll
 
-/-! # Fast semantics -/
+/-! # Fast and correct semantics -/
 
-theorem final (e : Exp) (env : Environment) : exec e.optAll.compile env = [e.sem env] := by
+theorem sound_opt_compile (e : Exp) (env : Environment) :
+    exec e.optAll.compile env = [e.sem env] := by
   grind [exec_sound, optAll_sound]
 
 def Exp.semFast (env : Environment) (e : Exp) : Int := (exec e.optAll.compile env).head?.getD 0
 
-@[csimp]
-theorem Exp.sem_eq_semFast : sem = semFast := by grind [semFast, final]
+/-- A `@[csimp]` theorem replaces one definition by another during compilation time -/
+@[csimp] theorem Exp.sem_eq_semFast : sem = semFast := by grind [semFast, sound_opt_compile]

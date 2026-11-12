@@ -19,5 +19,5 @@ def Exp.opt : Exp → Exp
   | .C c => .C c
 
 theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
-  fun_induction opt e with grind [compile, sem]
+  fun_induction opt e with grind [sem]
 

@@ -1,11 +1,10 @@
 Fp/Parts/lean-lecture.lean
 Fp/Parts/graphviz-widgets.lean
-Fp/Parts/f-solution.lean
 Fp/Parts/mini-compiler-project.lean
 Fp/Parts/visualization.lean
+Fp/Parts/optimization.lean
 Fp/Parts/virtual-machine.lean
 Fp/Parts/compilation.lean
 Fp/Parts/soundness-of-compilation.lean
-Fp/Parts/optimization.lean
 Fp/Parts/repeated-optimization.lean
-Fp/Parts/fast-semantics.lean
+Fp/Parts/fast-and-correct-semantics.lean
