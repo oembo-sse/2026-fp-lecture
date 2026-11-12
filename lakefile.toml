@@ -1,0 +1,10 @@
+name = "Fp"
+version = "0.1.0"
+defaultTargets = ["fp"]
+
+[[lean_lib]]
+name = "Fp"
+
+[[require]]
+name = "proofwidgets"
+scope = "leanprover-community"
