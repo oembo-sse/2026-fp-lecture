@@ -12,6 +12,7 @@ build:
     @- rm Fp/Parts/*.lean
     {{BIN}} parts {{INPUT}} Fp/Parts/
     just mk "Lean lecture"
+    just mk "Lean lecture" "Warmup"
     just mk "Lean lecture" "Mini compiler project"
     just mk "Lean lecture" "Graphviz widgets" "Mini compiler project" "Optimization"
     just mk "Lean lecture" "Graphviz widgets" "Mini compiler project" "Optimization" "Visualization"

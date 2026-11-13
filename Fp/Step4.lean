@@ -2,8 +2,6 @@ import ProofWidgets.Component.HtmlDisplay
 
 /-! # Lean lecture -/
 
-section
-
 /-! # Graphviz widgets
 
 This section adds commands to render graphs in the infoview (on the right) using Graphviz
@@ -156,7 +154,7 @@ def ex.env : Environment
 
 /-! # Optimization -/
 
-def Exp.opt : Exp → Exp
+def Exp.red : Exp → Exp
   | .Add (.C i) (.C j) => .C (i + j)
   | .Add x (.C 0) => x
   | .Add (.C 0) x => x
@@ -165,17 +163,17 @@ def Exp.opt : Exp → Exp
   | .Sub (.C i) (.C j) => .C (i - j)
   | .Minus (.C i) => .C (- i)
   | .Minus (.Minus x) => x
-  | .Minus x => .Minus x.opt
   | .Abs (.C i) => .C i.natAbs
   --
-  | .Add a b => .Add a.opt b.opt
-  | .Sub a b => .Sub a.opt b.opt
-  | .Abs x => .Abs x.opt
+  | .Add a b => .Add a.red b.red
+  | .Sub a b => .Sub a.red b.red
+  | .Minus x => .Minus x.red
+  | .Abs x => .Abs x.red
   | .V s => .V s
   | .C c => .C c
 
-theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
-  fun_induction opt e with grind [sem]
+theorem red_sound (e : Exp) (env : Environment) : e.red.sem env = e.sem env := by
+  fun_induction red e with grind [sem]
 
 /-! # Visualization -/
 
@@ -199,42 +197,4 @@ def Exp.graph : Exp → GraphBuilder NodeId
 def Exp.ast (e : Exp) : Graph.GraphBuilder Unit := do let _ ← e.graph
 
 #graphviz ex.ast
-
-/-! # Virtual Machine -/
-
-/-! ## F# solution
-```fsharp
-// Virtual Machine
-type Instruction = | ADD | SUB | SIGN | ABS | PUSH of int
-type Stack = int list
-
-// intpInstr: Instruction -> Stack -> Stack
-let intpInstr i st =
-  match (i,st) with
-  | (ADD,(n::m::rest)) -> m+n ::rest
-  | (SUB,(n::m::rest)) -> m-n ::rest
-  | (SIGN,(n::rest))   -> -n :: rest
-  | (ABS,(n::rest))    -> (abs n)::rest
-  | (PUSH n,_)         -> n::st
-```
--/
-
-inductive Instruction where
-  | ADD | SUB | SIGN | ABS | PUSH (value : Int) | READ (s : String)
-deriving Repr
-abbrev Stack := List Int
-
-open Instruction in
-def intpInstr (i : Instruction) (env : Environment) (st : Stack) : Stack :=
-  match i, st with
-  | ADD, n::m::rest => (m+n) ::rest
-  | SUB, n::m::rest => (m-n) ::rest
-  | SIGN, n::rest   => (-n)  ::rest
-  | ABS, n::rest    => n.natAbs ::rest
-  | PUSH n, _       => n::st
-  | READ s, _       => env s::st
-  | _, _ => []
-
-def exec (insts : List Instruction) (env : Environment) : Stack :=
-  insts.foldr (fun inst stack ↦ intpInstr inst env stack) []
 

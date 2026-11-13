@@ -2,8 +2,6 @@ import ProofWidgets.Component.HtmlDisplay
 
 /-! # Lean lecture -/
 
-section
-
 /-! # Graphviz widgets
 
 This section adds commands to render graphs in the infoview (on the right) using Graphviz
@@ -156,7 +154,7 @@ def ex.env : Environment
 
 /-! # Optimization -/
 
-def Exp.opt : Exp → Exp
+def Exp.red : Exp → Exp
   | .Add (.C i) (.C j) => .C (i + j)
   | .Add x (.C 0) => x
   | .Add (.C 0) x => x
@@ -165,17 +163,17 @@ def Exp.opt : Exp → Exp
   | .Sub (.C i) (.C j) => .C (i - j)
   | .Minus (.C i) => .C (- i)
   | .Minus (.Minus x) => x
-  | .Minus x => .Minus x.opt
   | .Abs (.C i) => .C i.natAbs
   --
-  | .Add a b => .Add a.opt b.opt
-  | .Sub a b => .Sub a.opt b.opt
-  | .Abs x => .Abs x.opt
+  | .Add a b => .Add a.red b.red
+  | .Sub a b => .Sub a.red b.red
+  | .Minus x => .Minus x.red
+  | .Abs x => .Abs x.red
   | .V s => .V s
   | .C c => .C c
 
-theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
-  fun_induction opt e with grind [sem]
+theorem red_sound (e : Exp) (env : Environment) : e.red.sem env = e.sem env := by
+  fun_induction red e with grind [sem]
 
 /-! # Visualization -/
 
@@ -237,26 +235,4 @@ def intpInstr (i : Instruction) (env : Environment) (st : Stack) : Stack :=
 
 def exec (insts : List Instruction) (env : Environment) : Stack :=
   insts.foldr (fun inst stack ↦ intpInstr inst env stack) []
-
-/-! # Compilation -/
-
-def Exp.compile : Exp → List Instruction
-  | V x => [.READ x]
-  | C i => [.PUSH i]
-  | Add n m => .ADD :: m.compile ++ n.compile
-  | Sub n m => .SUB :: m.compile ++ n.compile
-  | Minus n => .SIGN :: n.compile
-  | Abs n => .ABS :: n.compile
-
-#eval ex.compile
-#eval exec ex.compile ex.env
-
-/-! # Soundness of compilation -/
-
-theorem exec_sound_aux (x : Exp) (env : Environment) (rest : List Instruction) :
-    exec (x.compile ++ rest) env = [x.sem env] ++ exec rest env := by
-  induction x generalizing rest env with grind [exec, compile, intpInstr, sem]
-
-theorem exec_sound (x : Exp) (env : Environment) : exec x.compile env = [x.sem env] := by
-  grind [exec_sound_aux x env [], exec]
 

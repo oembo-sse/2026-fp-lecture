@@ -135,6 +135,10 @@ const README: &str = r#"
 
 _By Oliver Bøving_
 
+## Slides
+
+The slides are [here](slides.pdf). If you want to code along, the links below will take you to the online playground where you can try Lean in your browser. The slides also contains links as we introduce concepts.
+
 ## Links
 
 | Step | GitHub | Lean Playground |

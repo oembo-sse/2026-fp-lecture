@@ -2,8 +2,6 @@ import ProofWidgets.Component.HtmlDisplay
 
 /-! # Lean lecture -/
 
-section
-
 /-! # Graphviz widgets
 
 This section adds commands to render graphs in the infoview (on the right) using Graphviz
@@ -156,7 +154,7 @@ def ex.env : Environment
 
 /-! # Optimization -/
 
-def Exp.opt : Exp → Exp
+def Exp.red : Exp → Exp
   | .Add (.C i) (.C j) => .C (i + j)
   | .Add x (.C 0) => x
   | .Add (.C 0) x => x
@@ -165,17 +163,17 @@ def Exp.opt : Exp → Exp
   | .Sub (.C i) (.C j) => .C (i - j)
   | .Minus (.C i) => .C (- i)
   | .Minus (.Minus x) => x
-  | .Minus x => .Minus x.opt
   | .Abs (.C i) => .C i.natAbs
   --
-  | .Add a b => .Add a.opt b.opt
-  | .Sub a b => .Sub a.opt b.opt
-  | .Abs x => .Abs x.opt
+  | .Add a b => .Add a.red b.red
+  | .Sub a b => .Sub a.red b.red
+  | .Minus x => .Minus x.red
+  | .Abs x => .Abs x.red
   | .V s => .V s
   | .C c => .C c
 
-theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
-  fun_induction opt e with grind [sem]
+theorem red_sound (e : Exp) (env : Environment) : e.red.sem env = e.sem env := by
+  fun_induction red e with grind [sem]
 
 /-! # Visualization -/
 
@@ -264,34 +262,24 @@ theorem exec_sound (x : Exp) (env : Environment) : exec x.compile env = [x.sem e
 
 def Exp.size (e : Exp) : Nat := e.compile.length
 
-theorem size_opt_le (e : Exp) : e.opt.size < e.size ∨ e.opt = e := by
-  fun_induction opt e with grind [size, compile]
+theorem size_red_le (e : Exp) : e.red.size < e.size ∨ e.red = e := by
+  fun_induction red e with grind [size, compile]
 
-def Exp.optAll (e : Exp) : Exp :=
-  let e' := e.opt
-  if _ : e ≠ e' then optAll e' else e
+def Exp.redAll (e : Exp) : Exp :=
+  let e' := e.red
+  if _ : e ≠ e' then redAll e' else e
 termination_by e.size
-decreasing_by grind [size_opt_le]
+decreasing_by grind [size_red_le]
 
-theorem optAll_sound (e : Exp) (env : Environment) : e.optAll.sem env = e.sem env := by
-  fun_induction optAll e with grind [opt_sound]
+theorem redAll_sound (e : Exp) (env : Environment) : e.redAll.sem env = e.sem env := by
+  fun_induction redAll e with grind [red_sound]
 
 #graphviz do
   ex.ast
-  ex.opt.ast
-  ex.opt.opt.ast
-  ex.optAll.ast
+  ex.red.ast
+  ex.red.red.ast
+  ex.redAll.ast
 
 #eval compile ex
-#eval compile ex.optAll
+#eval compile ex.redAll
 
-/-! # Fast and correct semantics -/
-
-theorem sound_opt_compile (e : Exp) (env : Environment) :
-    exec e.optAll.compile env = [e.sem env] := by
-  grind [exec_sound, optAll_sound]
-
-def Exp.semFast (env : Environment) (e : Exp) : Int := (exec e.optAll.compile env).head?.getD 0
-
-/-- A `@[csimp]` theorem replaces one definition by another during compilation time -/
-@[csimp] theorem Exp.sem_eq_semFast : sem = semFast := by grind [semFast, sound_opt_compile]

@@ -1,4 +1,5 @@
 Fp/Parts/lean-lecture.lean
+Fp/Parts/warmup.lean
 Fp/Parts/graphviz-widgets.lean
 Fp/Parts/mini-compiler-project.lean
 Fp/Parts/visualization.lean

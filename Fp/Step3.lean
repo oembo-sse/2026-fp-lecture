@@ -2,8 +2,6 @@ import ProofWidgets.Component.HtmlDisplay
 
 /-! # Lean lecture -/
 
-section
-
 /-! # Graphviz widgets
 
 This section adds commands to render graphs in the infoview (on the right) using Graphviz
@@ -156,7 +154,7 @@ def ex.env : Environment
 
 /-! # Optimization -/
 
-def Exp.opt : Exp → Exp
+def Exp.red : Exp → Exp
   | .Add (.C i) (.C j) => .C (i + j)
   | .Add x (.C 0) => x
   | .Add (.C 0) x => x
@@ -165,38 +163,15 @@ def Exp.opt : Exp → Exp
   | .Sub (.C i) (.C j) => .C (i - j)
   | .Minus (.C i) => .C (- i)
   | .Minus (.Minus x) => x
-  | .Minus x => .Minus x.opt
   | .Abs (.C i) => .C i.natAbs
   --
-  | .Add a b => .Add a.opt b.opt
-  | .Sub a b => .Sub a.opt b.opt
-  | .Abs x => .Abs x.opt
+  | .Add a b => .Add a.red b.red
+  | .Sub a b => .Sub a.red b.red
+  | .Minus x => .Minus x.red
+  | .Abs x => .Abs x.red
   | .V s => .V s
   | .C c => .C c
 
-theorem opt_sound (e : Exp) (env : Environment) : e.opt.sem env = e.sem env := by
-  fun_induction opt e with grind [sem]
-
-/-! # Visualization -/
-
-open Graph in
-def Exp.graph : Exp → GraphBuilder NodeId
-  | .C c => node {label := toString c}
-  | .V v => node {label := v}
-  | .Add l r => do
-    let id ← node {label := "_ + _"}
-    edge id (← l.graph) ""; edge id (← r.graph) ""
-    return id
-  | .Sub l r => do
-    let id ← node {label := "_ - _"}
-    edge id (← l.graph) ""; edge id (← r.graph) ""
-    return id
-  | .Minus x => do
-    let id ← node {label := "- _"}; edge id (← x.graph) ""; return id
-  | .Abs x => do
-    let id ← node {label := "abs _"}; edge id (← x.graph) ""; return id
-
-def Exp.ast (e : Exp) : Graph.GraphBuilder Unit := do let _ ← e.graph
-
-#graphviz ex.ast
+theorem red_sound (e : Exp) (env : Environment) : e.red.sem env = e.sem env := by
+  fun_induction red e with grind [sem]
 

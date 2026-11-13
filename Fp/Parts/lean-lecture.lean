@@ -1,4 +1,2 @@
 /-! # Lean lecture -/
 
-section
-
