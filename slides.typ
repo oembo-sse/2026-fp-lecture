@@ -104,7 +104,7 @@
 
 #slide[
   #set align(center)
-  Lean and other interactive theorem provers is a key to ensure correctness \ of contemporary research in Computer Science and Mathematics
+  Lean and other interactive theorem provers are key to ensure correctness \ of contemporary research in Computer Science and Mathematics
 ]
 
 #slide[
@@ -126,7 +126,7 @@
 
 #slide(title: [Callback to lecture 8])[
   #align(center, box(
-    stroke: black.transparentize(50%) + .1em,
+    stroke: slate-500 + .1em,
     radius: 1%,
     clip: true,
     outset: .1em,
